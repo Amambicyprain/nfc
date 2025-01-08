@@ -3,53 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Payment</title>
+    <title>NFC Tag Writer</title>
 </head>
 <body>
-    <h1>Scan NFC Tag to Pay</h1>
-    <button id="scanButton">Scan NFC Tag</button>
+    <h1>Write Mobile Money Number to NFC Tag</h1>
+    <input type="text" id="mobileNumber" placeholder="Enter mobile number" required>
+    <button id="writeButton">Write to NFC Tag</button>
+
+    <p>
+        <a href="payment.html">Go to NFC Payment Page</a>
+    </p>
 
     <script>
-        document.getElementById('scanButton').onclick = readNfcTagAndRequestPayment;
+        document.getElementById('writeButton').onclick = async () => {
+            const mobileNumber = document.getElementById('mobileNumber').value;
+            await writeNfcTag(mobileNumber);
+        };
 
-        async function readNfcTagAndRequestPayment() {
+        async function writeNfcTag(mobileNumber) {
             try {
                 const nfc = new NDEFReader();
-
-                // Request NFC permissions
-                await nfc.scan();
-                nfc.onreading = async (event) => {
-                    const mobileNumber = new TextDecoder().decode(event.message.records[0].data);
-                    const amount = 1000; // Set your payment amount here
-
-                    const paymentResponse = await requestPayment(mobileNumber, amount);
-                    if (paymentResponse.success) {
-                        alert("Payment successful!");
-                    } else {
-                        alert("Payment failed: " + paymentResponse.error);
-                    }
-                };
-                
-                nfc.onerror = (error) => {
-                    console.error("NFC error:", error);
-                    alert("NFC reading failed. Please try again.");
-                };
+                await nfc.write({
+                    records: [{
+                        recordType: "text",
+                        data: mobileNumber,
+                    }]
+                });
+                alert("NFC tag written successfully!");
             } catch (error) {
-                console.error("Error reading NFC tag:", error);
-                alert("Failed to read NFC tag. Make sure NFC is enabled and the tag is compatible.");
+                console.error("Error writing NFC tag:", error);
+                alert("Failed to write NFC tag.");
             }
-        }
-
-        async function requestPayment(mobileNumber, amount) {
-            // Replace with your mobile money API URL
-            const response = await fetch('YOUR_MOBILE_MONEY_API_URL', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ mobileNumber, amount })
-            });
-            return await response.json();
         }
     </script>
 </body>
